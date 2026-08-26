@@ -1,6 +1,9 @@
+from time import time
 import uuid
 import datetime
 import json
+import os, pathlib
+
 
 class Task:
     
@@ -75,7 +78,32 @@ class TaskManager:
         return results
     
     
-        
-        
+    def save_tasks_to_file(self, filename):
+        tasks = [task.to_dict() for task in self.tasks.values()]
+        with open(filename, 'w') as file:
+            json.dump(tasks, file)
+            
+    def load_tasks_from_file(self, filename):
+        try:
+            with open(filename, 'r') as file:
+                tasks_data = json.load(file)
+                for task_data in tasks_data:
+                    task = Task(
+                        name=task_data["name"],
+                        description=task_data.get("description"),
+                        priority=task_data["priority"],
+                        due_date=datetime.datetime.fromisoformat(task_data["due_date"]).date() if task_data.get("due_date") else None,
+                        status=task_data.get("status", "Pending"),
+                        task_id=task_data["task_id"]
+                    )
+                    self.add_task(task)
+        except FileNotFoundError:
+            pass  # If the file doesn't exist, we simply start with an empty task list
+        except json.JSONDecodeError:
+            backup_filename = f"tasks_corrupted_{int(time.time())}.json"
+            os.rename(filename, backup_filename)
+            
+            print(f"Error: The file '{filename}' is corrupted. It has been renamed to '{backup_filename}'. Starting with an empty task list.")
+            
     
 
