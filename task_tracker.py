@@ -1,4 +1,4 @@
-from time import time
+import time
 import uuid
 import datetime
 import json
@@ -104,7 +104,7 @@ class TaskManager:
         except FileNotFoundError:
             pass  # If the file doesn't exist, we simply start with an empty task list
         except json.JSONDecodeError:
-            backup_filename = f"tasks_corrupted_{int(time.time())}.json"
+            backup_filename = f"tasks_corrupted_{int(datetime.datetime.now().strftime("%Y%m%d_%H"))}.json"
             os.rename(filename, backup_filename)
             raise RuntimeError(f"Error: The tasks file '{filename}' is corrupted. A backup has been created as '{backup_filename}'. Please check the backup file for your tasks.")
             
