@@ -11,7 +11,7 @@ Features JSON persistence, input validation, data-based filtering, and file-corr
 
 Run the tool from your terminal using 'python task_tracker.py [command] [arguments]'
 
-### 1. add a task
+### 1. Add a task
 Add a task with a required priority ('low', 'medium', 'high') and an optional description and due-date:
 
 ```bash
