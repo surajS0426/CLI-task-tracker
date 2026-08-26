@@ -53,9 +53,28 @@ class TaskManager:
     def mark_task_completed(self, task_id):
         self.update_task_status(task_id, "Completed")
         
-    
-    
+    def list_tasks(self, status=None, priority=None, due_date=None):
+        results = list(self.tasks.values())
+        today = datetime.date.today()
         
+        if status == "Completed":
+            results = [task for task in results if task.status == "Completed"]
+        else:
+            results = [task for task in results if task.status == "Pending"]
+        if priority is not None:
+            results = [task for task in results if task.priority == priority]
+        if due_date == "Overdue":
+            results = [task for task in results if task.due_date and task.due_date < today]
+        elif due_date == "Due Today":
+            results = [task for task in results if task.due_date and task.due_date == today]
+        elif due_date == "Due This Week":
+            week_start = today - datetime.timedelta(days=today.weekday())
+            week_end = week_start + datetime.timedelta(days=6)
+            results = [task for task in results if task.due_date and week_start <= task.due_date <= week_end]
+
+        return results
+    
+    
         
         
     
