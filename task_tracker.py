@@ -132,6 +132,9 @@ def main():
     complete_parser = subparsers.add_parser("complete", help="Mark a task as completed")
     complete_parser.add_argument("task_id", type=str, help="ID of the task to mark as completed")
     
+    delete_parser = subparsers.add_parser("delete", help="Delete a task")
+    delete_parser.add_argument("task_id", type=str, help="ID of the task to delete")
+    
 
     args = parser.parse_args()
     
@@ -164,8 +167,27 @@ def main():
                 print(f"ID: {task.task_id}, Name: {task.name}, Priority: {task.priority}, Due Date: {due_date_str}, Status: {task.status}")
     
     elif args.command == "complete":
+        success = manager.mark_task_completed(args.task_id)
+        if success:
+            manager.save_tasks_to_file('tasks.json')
+            print(f"Task with ID '{args.task_id}' marked as completed.")
+        else:
+            print(f"Error: Task with ID '{args.task_id}' not found.")
+
+    elif args.command == "delete":
+        task_to_delete = manager.get_task(args.task_id)
         
-                
+        if not task_to_delete:
+            print(f"Error: Task with ID '{args.task_id}' not found.")
+        else:
+            confirm = input(f"Are you sure you want to delete the task '{task_to_delete.name}'? (y/n): ")
+            if confirm.lower() == 'y':
+                manager.remove_task(args.task_id)
+                manager.save_tasks_to_file('tasks.json')
+                print(f"Task with ID '{args.task_id}' deleted successfully.")
+            else:
+                print("Task deletion canceled.")
+
     else:
         parser.print_help()
         
