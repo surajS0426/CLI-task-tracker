@@ -68,9 +68,9 @@ class TaskManager:
             results = [task for task in results if task.priority == priority]
         if due_date == "Overdue":
             results = [task for task in results if task.due_date and task.due_date < today]
-        elif due_date == "Due Today":
+        elif due_date == "Today":
             results = [task for task in results if task.due_date and task.due_date == today]
-        elif due_date == "Due This Week":
+        elif due_date == "Week":
             week_start = today - datetime.timedelta(days=today.weekday())
             week_end = week_start + datetime.timedelta(days=6)
             results = [task for task in results if task.due_date and week_start <= task.due_date <= week_end]
@@ -106,4 +106,59 @@ class TaskManager:
             print(f"Error: The file '{filename}' is corrupted. It has been renamed to '{backup_filename}'. Starting with an empty task list.")
             
     
+import argparse
 
+def main():
+    manager = TaskManager()
+    manager.load_tasks_from_file('tasks.json')
+    
+    parser = argparse.ArgumentParser(description="Task Tracker CLI")
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+    
+    add_parser = subparsers.add_parser("add", help="Add a new task")
+    add_parser.add_argument("name", type=str, help="Name of the task")
+    add_parser.add_argument("--priority", type=str, choices=["low", "medium", "high"], required=True, help="Priority of the task")
+    add_parser.add_argument("--due-date", type=str, help="Due date of the task in YYYY-MM-DD format")
+    add_parser.add_argument("--description", type=str, help="Description of the task")
+    
+    list_parser = subparsers.add_parser("list", help="List tasks")
+    list_parser.add_argument("--status", type=str, choices=["Completed", "Pending"], help="Filter tasks by status")
+    list_parser.add_argument("--priority", type=str, choices=["low", "medium", "high"], help="Filter tasks by priority")
+    list_parser.add_argument("--due-date", type=str, choices=["Overdue", "Today", "Week"], help="Filter tasks by due date")
+    list_parser.add_argument("--all", action="store_true", help="List all tasks regardless of status")
+
+    args = parser.parse_args()
+    
+    if args.command == "add":
+        final_due_date = None
+        if args.due_date:
+            try:
+                final_due_date = datetime.date.fromisoformat(args.due_date)
+            except ValueError:
+                print("Error: Invalid due date format. Please use YYYY-MM-DD.")
+                return
+        if args.name.strip() == "":
+            print("Error: Task name cannot be empty.")
+            return
+        new_task = Task(name=args.name, priority=args.priority, due_date=final_due_date, description=args.description)
+        manager.add_task(new_task)
+        manager.save_tasks_to_file('tasks.json')
+        print(f"Task '{args.name}' added successfully.")
+    
+    elif args.command == "list":
+        if args.all:
+            tasks = manager.list_tasks()
+        else:
+            tasks = manager.list_tasks(status=args.status, priority=args.priority, due_date=args.due_date)
+        if not tasks:
+            print("No tasks found.")
+        else:
+            for task in tasks:
+                due_date_str = task.due_date.isoformat() if task.due_date else "No due date"
+                print(f"ID: {task.task_id}, Name: {task.name}, Priority: {task.priority}, Due Date: {due_date_str}, Status: {task.status}")
+                
+    else:
+        parser.print_help()
+        
+if __name__ == "__main__":
+    main()
