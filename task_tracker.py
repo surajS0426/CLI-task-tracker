@@ -135,6 +135,16 @@ def main():
     delete_parser = subparsers.add_parser("delete", help="Delete a task")
     delete_parser.add_argument("task_id", type=str, help="ID of the task to delete")
     
+    show_parser = subparsers.add_parser("show", help="Show details of a task")
+    show_parser.add_argument("task_id", type=str, help="ID of the task to show details for")
+    
+    edit_parser = subparsers.add_parser("edit", help="Edit a task")
+    edit_parser.add_argument("task_id", type=str, help="ID of the task to edit")
+    edit_parser.add_argument("--name", type=str, help="New name of the task")
+    edit_parser.add_argument("--priority", type=str, choices=["low", "medium", "high"], help="New priority of the task")
+    edit_parser.add_argument("--due-date", type=str, help="New due date of the task in YYYY-MM-DD format")
+    edit_parser.add_argument("--description", type=str, help="New description of the task")
+    
 
     args = parser.parse_args()
     
@@ -188,6 +198,48 @@ def main():
             else:
                 print("Task deletion canceled.")
 
+    elif args.command == "show":
+        task = manager.get_task(args.task_id)
+        if task:
+            due_date_str = task.due_date.isoformat() if task.due_date else "No due date"
+            description_str = task.description if task.description else "No description"
+            print(f"ID: {task.task_id}\nName: {task.name}\nDescription: {description_str}\nPriority: {task.priority}\nDue Date: {due_date_str}\nStatus: {task.status}")
+        else:
+            print(f"Error: Task with ID '{args.task_id}' not found.")
+            
+    elif args.command == "edit":
+        task_to_edit = manager.get_task(args.task_id)
+        if not task_to_edit:
+            print(f"Error: Task with ID '{args.task_id}' not found.")
+            return
+        
+        # Update task attributes if new values are provided
+        updates = {}
+        if args.name is not None:
+            if args.name.strip() == "":
+                print("Error: Task name cannot be empty.")
+                return
+            updates['name'] = args.name
+        
+        if args.priority is not None:
+            updates['priority'] = args.priority
+            
+        if args.due_date is not None:
+            try:
+                updates['due_date'] = datetime.date.fromisoformat(args.due_date)
+            except ValueError:
+                print("Error: Invalid due date format. Please use YYYY-MM-DD.")
+                return
+        if args.description is not None:
+            updates['description'] = args.description
+            
+        if not updates:
+            print("No updates provided. Task remains unchanged.")
+            return
+        
+        manager.update_task(args.task_id, **updates)
+        manager.save_tasks_to_file('tasks.json')
+        print(f"Task with ID '{args.task_id}' updated successfully.")
     else:
         parser.print_help()
         
