@@ -104,16 +104,21 @@ class TaskManager:
         except json.JSONDecodeError:
             backup_filename = f"tasks_corrupted_{int(time.time())}.json"
             os.rename(filename, backup_filename)
-            
-            print(f"Error: The file '{filename}' is corrupted. It has been renamed to '{backup_filename}'. Starting with an empty task list.")
+            raise RuntimeError(f"Error: The tasks file '{filename}' is corrupted. A backup has been created as '{backup_filename}'. Please check the backup file for your tasks.")
             
     
 import argparse
 
 def main():
     manager = TaskManager()
-    manager.load_tasks_from_file('tasks.json')
-    
+    try:
+        manager.load_tasks_from_file('tasks.json')
+    except RuntimeError as e:
+        print(f"Warning: {e}")
+    except OSError:
+        print("Error: Unable to access the tasks file. Please check file permissions.")
+        return
+        
     parser = argparse.ArgumentParser(description="Task Tracker CLI")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
     
@@ -145,6 +150,14 @@ def main():
     edit_parser.add_argument("--due-date", type=str, help="New due date of the task in YYYY-MM-DD format")
     edit_parser.add_argument("--description", type=str, help="New description of the task")
     
+    
+    def safe_input():
+        try:
+            manager.save_tasks_to_file('tasks.json')
+            return True
+        except OSError:
+            print("Error: could not save tasks to disk. Please check file permissions")
+            return False
 
     args = parser.parse_args()
     
@@ -161,8 +174,8 @@ def main():
             return
         new_task = Task(name=args.name, priority=args.priority, due_date=final_due_date, description=args.description)
         manager.add_task(new_task)
-        manager.save_tasks_to_file('tasks.json')
-        print(f"Task '{args.name}' added successfully.")
+        if safe_input():
+            print(f"Task '{args.name}' added successfully.")
     
     elif args.command == "list":
         if args.all:
@@ -193,8 +206,8 @@ def main():
             confirm = input(f"Are you sure you want to delete the task '{task_to_delete.name}'? (y/n): ")
             if confirm.lower() == 'y':
                 manager.remove_task(args.task_id)
-                manager.save_tasks_to_file('tasks.json')
-                print(f"Task with ID '{args.task_id}' deleted successfully.")
+                if safe_input():
+                    print(f"Task with ID '{args.task_id}' deleted successfully.")
             else:
                 print("Task deletion canceled.")
 
@@ -238,8 +251,8 @@ def main():
             return
         
         manager.update_task(args.task_id, **updates)
-        manager.save_tasks_to_file('tasks.json')
-        print(f"Task with ID '{args.task_id}' updated successfully.")
+        if safe_input():
+            print(f"Task with ID '{args.task_id}' updated successfully.")
     else:
         parser.print_help()
         
