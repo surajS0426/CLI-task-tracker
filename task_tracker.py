@@ -64,6 +64,8 @@ class TaskManager:
         
         if status == "Completed":
             results = [task for task in results if task.status == "Completed"]
+        elif status == "All":
+            pass
         else:
             results = [task for task in results if task.status == "Pending"]
         if priority is not None:
@@ -179,7 +181,7 @@ def main():
     
     elif args.command == "list":
         if args.all:
-            tasks = manager.list_tasks()
+            tasks = manager.list_tasks(status="All", priority=args.priority, due_date=args.due_date)
         else:
             tasks = manager.list_tasks(status=args.status, priority=args.priority, due_date=args.due_date)
         if not tasks:
