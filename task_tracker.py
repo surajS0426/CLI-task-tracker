@@ -52,9 +52,11 @@ class TaskManager:
         task = self.get_task(task_id)
         if task:
             task.status = new_status
+            return True
+        return False
     
     def mark_task_completed(self, task_id):
-        self.update_task_status(task_id, "Completed")
+        return self.update_task_status(task_id, "Completed")
         
     def list_tasks(self, status=None, priority=None, due_date=None):
         results = list(self.tasks.values())
@@ -126,6 +128,10 @@ def main():
     list_parser.add_argument("--priority", type=str, choices=["low", "medium", "high"], help="Filter tasks by priority")
     list_parser.add_argument("--due-date", type=str, choices=["Overdue", "Today", "Week"], help="Filter tasks by due date")
     list_parser.add_argument("--all", action="store_true", help="List all tasks regardless of status")
+    
+    complete_parser = subparsers.add_parser("complete", help="Mark a task as completed")
+    complete_parser.add_argument("task_id", type=str, help="ID of the task to mark as completed")
+    
 
     args = parser.parse_args()
     
@@ -156,6 +162,9 @@ def main():
             for task in tasks:
                 due_date_str = task.due_date.isoformat() if task.due_date else "No due date"
                 print(f"ID: {task.task_id}, Name: {task.name}, Priority: {task.priority}, Due Date: {due_date_str}, Status: {task.status}")
+    
+    elif args.command == "complete":
+        
                 
     else:
         parser.print_help()
