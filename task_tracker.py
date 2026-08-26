@@ -192,8 +192,8 @@ def main():
     elif args.command == "complete":
         success = manager.mark_task_completed(args.task_id)
         if success:
-            manager.save_tasks_to_file('tasks.json')
-            print(f"Task with ID '{args.task_id}' marked as completed.")
+            if safe_input():
+                print(f"Task with ID '{args.task_id}' marked as completed.")
         else:
             print(f"Error: Task with ID '{args.task_id}' not found.")
 
